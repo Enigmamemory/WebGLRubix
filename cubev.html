@@ -8,7 +8,11 @@ attribute  vec4 vColor;
 varying vec4 fColor;
 
 uniform vec3 theta;
-uniform vec3 trans;
+uniform mat4 model;
+
+//uniform vec3 thetav;
+//uniform vec3 thetam;
+//uniform vec3 trans;
 
 void main()
 {
@@ -17,6 +21,16 @@ void main()
     vec3 angles = radians( theta );
     vec3 c = cos( angles );
     vec3 s = sin( angles );
+
+    /*
+    vec3 anglesv = radians( thetav );
+    vec3 cv = cos( anglesv );
+    vec3 sv = sin( anglesv );
+    
+    vec3 anglesm = radians( thetam );
+    vec3 cm = cos( anglesm );
+    vec3 sm = sin( anglesm );
+    */
 
     // Remeber: thse matrices are column-major
     mat4 rx = mat4( 1.0,  0.0,  0.0, 0.0,
@@ -29,9 +43,39 @@ void main()
 		    s.y, 0.0,  c.y, 0.0,
 		    0.0, 0.0,  0.0, 1.0 );
 
-
     mat4 rz = mat4( c.z, s.z, 0.0, 0.0,
 		    -s.z,  c.z, 0.0, 0.0,
+		    0.0,  0.0, 1.0, 0.0,
+		    0.0,  0.0, 0.0, 1.0 );
+
+    /*
+    mat4 rxv = mat4( 1.0,  0.0,  0.0, 0.0,
+		    0.0,  cv.x,  sv.x, 0.0,
+		    0.0, -sv.x,  cv.x, 0.0,
+		    0.0,  0.0,  0.0, 1.0 );
+
+    mat4 ryv = mat4( cv.y, 0.0, -sv.y, 0.0,
+		    0.0, 1.0,  0.0, 0.0,
+		    sv.y, 0.0,  cv.y, 0.0,
+		    0.0, 0.0,  0.0, 1.0 );
+
+    mat4 rzv = mat4( cv.z, sv.z, 0.0, 0.0,
+		    -sv.z,  cv.z, 0.0, 0.0,
+		    0.0,  0.0, 1.0, 0.0,
+                    0.0,  0.0, 0.0, 1.0 );
+    
+    mat4 rxm = mat4( 1.0,  0.0,  0.0, 0.0,
+		    0.0,  cm.x,  sm.x, 0.0,
+		    0.0, -sm.x,  cm.x, 0.0,
+		    0.0,  0.0,  0.0, 1.0 );
+
+    mat4 rym = mat4( cm.y, 0.0, -sm.y, 0.0,
+		    0.0, 1.0,  0.0, 0.0,
+		    sm.y, 0.0,  cm.y, 0.0,
+		    0.0, 0.0,  0.0, 1.0 );
+
+    mat4 rzm = mat4( cm.z, sm.z, 0.0, 0.0,
+		    -sm.z,  cm.z, 0.0, 0.0,
 		    0.0,  0.0, 1.0, 0.0,
 		    0.0,  0.0, 0.0, 1.0 );
 
@@ -39,9 +83,15 @@ void main()
                    0.0, 1.0, 0.0, 0.0,
                    0.0, 0.0, 1.0, 0.0,
                    trans.x, trans.y, trans.z, 1.0);
+    */
+
+    mat4 view = rz * ry * rx;
+    //mat4 newrot = rz * ry * rx;
+    //mat4 model = rzm * rym * rxm * tm;
+    //mat4 model = tm;
 
     fColor = vColor;
-    gl_Position = rz * ry * rx * tm * vPosition;
+    gl_Position = view  * model * vPosition;
     gl_Position.z = -gl_Position.z;
 }
 </script>
@@ -66,16 +116,44 @@ main()
 <script type="text/javascript" src="testcube.js"></script>
 
 <body>
-<canvas id="gl-canvas" width="512"" height="512">
+<canvas id="gl-canvas" width="512" height="512">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
 
 <br/>
 
-<button id= "xButton">Rotate X</button>
-<button id= "yButton">Rotate Y</button>
-<button id= "zButton">Rotate Z</button>
+<div class="slidecontainer">
+  <p>X-Axis Rotation</p>
+  <input type="range" min="-135" max="225" value="0" class="slider" id="xSlider">
+</div>
 
+<div class="slidecontainer">
+  <p>Y-Axis Rotation</p>
+  <input type="range" min="-135" max="225" value="0" class="slider" id="ySlider">
+</div>
+
+<div class="slidecontainer">
+  <p>z-Axis Rotation</p>
+  <input type="range" min="-135" max="225" value="0" class="slider" id="zSlider">
+</div>
+
+<button class= "rotate" id= "xTopCounter">X Top Counter</button>
+<button class= "rotate" id= "xMidCounter">X Mid Counter</button>
+<button class= "rotate" id= "xBotCounter">X Bot Counter</button>
+
+<br>
+<br>
+
+<button class= "rotate" id= "yTopCounter">Y Top Counter</button>
+<button class= "rotate" id= "yMidCounter">Y Mid Counter</button>
+<button class= "rotate" id= "yBotCounter">Y Bot Counter</button>
+
+<br>
+<br>
+
+<button class= "rotate" id= "zTopCounter">Z Top Counter</button>
+<button class= "rotate" id= "zMidCounter">Z Mid Counter</button>
+<button class= "rotate" id= "zBotCounter">Z Bot Counter</button>
 
 </body>
 </html>
