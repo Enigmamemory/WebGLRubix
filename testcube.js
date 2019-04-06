@@ -22,6 +22,7 @@ var cbufList = [];
 var ibufList = [];
 
 var rmode = 0;
+var svalue = 0;
 
 var pieces = new Array(
     
@@ -30,6 +31,8 @@ var pieces = new Array(
     18,19,20,21,22,23,24,25,26
     
 );
+
+var exportdata;
 
 var test = mat4(1,0,0,0,
 	        0,1,0,0,
@@ -41,6 +44,8 @@ var test2 = mat4(0,0,0,0);
 var axis = 0;
 
 var disabled = false;
+var scrambled = false;
+var sArray = [];
 var rotc = 0;
 
 var thetamlist = new Array(
@@ -345,7 +350,7 @@ var thetalist = new Array(
 var theta = [ 0, 0, 0 ];
 var theta2 = [ 0, 0, 0 ];
 
-var tc = 0.21;
+var tc = 0.31;
 
 var translist = new Array(
 
@@ -395,7 +400,7 @@ var transLoc;
 
 /* =================== DATA =================*/
 
-var vd = 0.1
+var vd = 0.15
 
 var vertices1 = [
     /*
@@ -755,6 +760,270 @@ window.onload = function init()
         //axis = zAxis;
     };
 
+        document.getElementById( "xTopClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveXTopCW();
+	rmode = 9;
+	
+        //axis = xAxis;
+    };
+    document.getElementById( "xMidClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveXMidCW();
+	rmode = 10;
+	   
+        //axis = yAxis;
+    };
+    document.getElementById( "xBotClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveXBotCW();
+	rmode = 11;
+	
+        //axis = zAxis;
+    };
+    
+    document.getElementById( "yTopClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveYTopCW();
+	rmode = 12;
+	
+        //axis = xAxis;
+    };
+    document.getElementById( "yMidClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveYMidCW();
+	rmode = 13;
+	   
+        //axis = yAxis;
+    };
+    document.getElementById( "yBotClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveYBotCW();
+	rmode = 14;
+	
+        //axis = zAxis;
+    };
+
+    document.getElementById( "zTopClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveZTopCW();
+	rmode = 15;
+	
+        //axis = xAxis;
+    };
+    document.getElementById( "zMidClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveZMidCW();
+	rmode = 16;
+	   
+        //axis = yAxis;
+    };
+    document.getElementById( "zBotClock" ).onclick = function () {
+	disablebuts();
+	disabled = true;
+	MoveZBotCW();
+	rmode = 17;
+	
+        //axis = zAxis;
+    };
+    document.getElementById( "scramble" ).onclick = function () {
+	svalue = document.getElementById("svalue").value
+	//console.log(svalue);
+	
+	if (Number.isInteger(svalue)) {
+	    console.log("Not a number");
+	}
+
+	else {
+
+	    scrambled = true;
+	    disablebuts();
+	    var i;
+	    for (i = 0; i < svalue; i++) {
+
+		var rmode2 = Math.floor(Math.random() * 18);
+		sArray.push(rmode2);
+		
+	    }
+
+	}
+	
+    };
+
+
+    document.getElementById( "export" ).onclick = function ()
+    {
+
+	exportdata = {
+
+	    "theta": theta,
+	    "thetalist": thetalist,
+	    "pieces": pieces
+	    
+	};
+
+	var fname = document.getElementById( "fname" ).value
+
+	var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportdata));
+	var dlAnchorElem = document.getElementById('downloadAnchorElem');
+	dlAnchorElem.setAttribute("href",     dataStr     );
+	dlAnchorElem.setAttribute("download", fname       );
+	dlAnchorElem.click();
+	
+    };
+    
+    document.getElementById( "load" ).onclick = function ()
+    {
+	loadMoves();
+    };
+    
+    function loadMoves() {
+	var fileInput = document.getElementById('avatar');
+
+	var file = fileInput.files[0];
+	var textType = /text.*/;
+	var jsonType = /json.*/;
+
+	if (file.type.match(textType) || file.type.match(jsonType)) {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+		var res = JSON.parse(reader.result);
+		//console.log(res);
+
+		var ntheta = res.theta;
+		var nthetalist = res.thetalist;
+		var fthetalist = []
+		var npieces = res.pieces;
+
+		var i;
+		
+		for (i = 0; i < nthetalist.length; i++){
+
+		    var j;
+		    //console.log(nthetalist[i]);
+
+		    var holder = [];
+		    
+		    for (j = 0; j < nthetalist[i].length; j++)
+		    {
+
+			holder = holder.concat(nthetalist[i][j]);
+			
+		    }
+
+		    //console.log(mat4(holder));
+		    nthetalist[i] = mat4(holder);
+		}
+		
+
+		//console.log(nthetalist);
+
+		/*
+		console.log(mat4(
+
+		    [1,0,0,0,
+		     0,1,0,0,
+		     0,0,1,0,
+		     0,0,0,1
+		    ]
+
+		));
+		*/
+		
+		//console.log(npieces);
+		//console.log(thetalist);
+
+		theta = ntheta;
+		document.getElementById( "xSlider" ).value = theta[0];
+		document.getElementById( "ySlider" ).value = theta[1];
+		document.getElementById( "zSlider" ).value = theta[2];
+		
+		thetalist = nthetalist;
+		pieces = npieces;
+		
+		/*
+		totalTransform = mat4(Array.prototype.slice.call(flatten([...res["transforms"]])));
+		runFromString(res["moves"]);
+		*/
+            
+            }
+
+            reader.readAsText(file);   
+        
+	} else {
+            alert("File not supported!");
+            // tmp = file.type;
+	}
+    }
+    
+    function ChooseMove(a) {
+
+	if (a == 0) {
+	    MoveXTopCCW();
+	}
+	else if (a == 1) {
+	    MoveXMidCCW();
+	}
+	else if (a == 2) {
+	    MoveXBotCCW();
+	}
+	else if (a == 3) {
+	    MoveYTopCCW();
+	}
+	else if (a == 4) {
+	    MoveYMidCCW();
+	}
+	else if (a == 5) {
+	    MoveYBotCCW();
+	}
+	else if (a == 6) {
+	    MoveZTopCCW();
+	}
+	else if (a == 7) {
+	    MoveZMidCCW();
+	}
+	else if (a == 8) {
+	    MoveZBotCCW();
+	}
+	else if (a == 9) {
+	    MoveXTopCW();
+	}
+	else if (a == 10) {
+	    MoveXMidCW();
+	}
+	else if (a == 11) {
+	    MoveXBotCW();
+	}
+	else if (a == 12) {
+	    MoveYTopCW();
+	}
+	else if (a == 13) {
+	    MoveYMidCW();
+	}
+	else if (a == 14) {
+	    MoveYBotCW();
+	}
+	else if (a == 15) {
+	    MoveZTopCW();
+	}
+	else if (a == 16) {
+	    MoveZMidCW();
+	}
+	else if (a == 17) {
+	    MoveZBotCW();
+	}
+	
+    }
+    
     function MoveXTopCCW() {
 	var hold1 = pieces[2];
 	var hold2 = pieces[11];
@@ -895,6 +1164,147 @@ window.onload = function init()
 	pieces[21] = hold2;
 
     }
+
+    function MoveXTopCW() {
+	var hold1 = pieces[2];
+	var hold2 = pieces[11];
+
+	pieces[2] = pieces[8];
+	pieces[8] = pieces[26];
+	pieces[26] = pieces[20];
+	pieces[20] = hold1;
+
+	pieces[11] = pieces[5];
+	pieces[5] = pieces[17];
+	pieces[17] = pieces[23];
+	pieces[23] = hold2;
+    }
+
+    function MoveXMidCW() {
+	var hold1 = pieces[1];
+	var hold2 = pieces[10];
+
+	pieces[1] = pieces[7];
+	pieces[7] = pieces[25];
+	pieces[25] = pieces[19];
+	pieces[19] = hold1;
+
+	pieces[10] = pieces[4];
+	pieces[4] = pieces[16];
+	pieces[16] = pieces[22];
+	pieces[22] = hold2;
+    }
+
+    function MoveXBotCW() {
+	var hold1 = pieces[0];
+	var hold2 = pieces[9];
+
+	pieces[0] = pieces[6];
+	pieces[6] = pieces[24];
+	pieces[24] = pieces[18];
+	pieces[18] = hold1;
+
+	pieces[9] = pieces[3];
+	pieces[3] = pieces[15];
+	pieces[15] = pieces[21];
+	pieces[21] = hold2;
+    }
+
+    function MoveYTopCW() {
+	var hold1 = pieces[0];
+	var hold2 = pieces[1];
+
+	pieces[0] = pieces[2];
+	pieces[2] = pieces[20];
+	pieces[20] = pieces[18];
+	pieces[18] = hold1;
+
+	pieces[1] = pieces[11];
+	pieces[11] = pieces[19];
+	pieces[19] = pieces[9];
+	pieces[9] = hold2;
+
+    }
+
+    function MoveYMidCW() {
+	var hold1 = pieces[3];
+	var hold2 = pieces[4];
+	
+	pieces[3] = pieces[5];
+	pieces[5] = pieces[23];
+	pieces[23] = pieces[21];
+	pieces[21] = hold1;
+
+	pieces[4] = pieces[14];
+	pieces[14] = pieces[22];
+	pieces[22] = pieces[12];
+	pieces[12] = hold2;
+
+    }
+
+    function MoveYBotCW() {
+	var hold1 = pieces[6];
+	var hold2 = pieces[7];
+
+	pieces[6] = pieces[8];
+	pieces[8] = pieces[26];
+	pieces[26] = pieces[24];
+	pieces[24] = hold1;
+
+	pieces[7] = pieces[17];
+	pieces[17] = pieces[25];
+	pieces[25] = pieces[15];
+	pieces[15] = hold2;
+
+    }
+
+    function MoveZTopCW() {
+	var hold1 = pieces[0];
+	var hold2 = pieces[1];
+
+	pieces[0] = pieces[6];
+	pieces[6] = pieces[8];
+	pieces[8] = pieces[2];
+	pieces[2] = hold1;
+
+	pieces[1] = pieces[3];
+	pieces[3] = pieces[7];
+	pieces[7] = pieces[5];
+	pieces[5] = hold2;
+
+    }
+
+    function MoveZMidCW() {
+	var hold1 = pieces[9];
+	var hold2 = pieces[10];
+
+	pieces[9] = pieces[15];
+	pieces[15] = pieces[17];
+	pieces[17] = pieces[11];
+	pieces[11] = hold1;
+
+	pieces[10] = pieces[12];
+	pieces[12] = pieces[16];
+	pieces[16] = pieces[14];
+	pieces[14] = hold2;
+
+    }
+
+    function MoveZBotCW() {
+	var hold1 = pieces[18];
+	var hold2 = pieces[19];
+
+	pieces[18] = pieces[24];
+	pieces[24] = pieces[26];
+	pieces[26] = pieces[20];
+	pieces[20] = hold1;
+
+	pieces[19] = pieces[21];
+	pieces[21] = pieces[25];
+	pieces[25] = pieces[23];
+	pieces[23] = hold2;
+
+    }
     
     function addmatrix (theta, tshape) {
 
@@ -931,18 +1341,6 @@ window.onload = function init()
 	    
 	}
 
-	/*
-	thetalist[p1][0] += a;
-	thetalist[p2][0] += a;
-	thetalist[p3][0] += a;
-	thetalist[p4][0] += a;
-	thetalist[p5][0] += a;
-	thetalist[p6][0] += a;
-	thetalist[p7][0] += a;
-	thetalist[p8][0] += a;
-	thetalist[p9][0] += a;
-	*/
-	
     }
 
     function RotXMidCCW(a,pieces) {
@@ -969,18 +1367,6 @@ window.onload = function init()
 	    
 	}
 
-	/*
-	thetalist[p1][0] += a;
-	thetalist[p2][0] += a;
-	thetalist[p3][0] += a;
-	thetalist[p4][0] += a;
-	thetalist[p5][0] += a;
-	thetalist[p6][0] += a;
-	thetalist[p7][0] += a;
-	thetalist[p8][0] += a;
-	thetalist[p9][0] += a;
-	*/
-	
     }
 
     function RotXBotCCW(a,pieces) {
@@ -1007,18 +1393,6 @@ window.onload = function init()
 	    
 	}
 
-	/*
-	thetalist[p1][0] += a;
-	thetalist[p2][0] += a;
-	thetalist[p3][0] += a;
-	thetalist[p4][0] += a;
-	thetalist[p5][0] += a;
-	thetalist[p6][0] += a;
-	thetalist[p7][0] += a;
-	thetalist[p8][0] += a;
-	thetalist[p9][0] += a;
-	*/
-	
     }
 
     function RotYTopCCW(a,pieces) {
@@ -1044,20 +1418,6 @@ window.onload = function init()
 	    thetamlist[changelist[i]] = rotateY(a);
 	    
 	}
-
-	/*
-	
-	thetalist[p1][1] += a;
-	thetalist[p2][1] += a;
-	thetalist[p3][1] += a;
-	thetalist[p4][1] += a;
-	thetalist[p5][1] += a;
-	thetalist[p6][1] += a;
-	thetalist[p7][1] += a;
-	thetalist[p8][1] += a;
-	thetalist[p9][1] += a;
-
-	*/
 	
     }
 
@@ -1085,17 +1445,6 @@ window.onload = function init()
 	    
 	}
 	
-	/*
-	thetalist[p1][1] += a;
-	thetalist[p2][1] += a;
-	thetalist[p3][1] += a;
-	thetalist[p4][1] += a;
-	thetalist[p5][1] += a;
-	thetalist[p6][1] += a;
-	thetalist[p7][1] += a;
-	thetalist[p8][1] += a;
-	thetalist[p9][1] += a;
-	*/
     }
 
     function RotYBotCCW(a,pieces) {
@@ -1121,18 +1470,6 @@ window.onload = function init()
 	    thetamlist[changelist[i]] = rotateY(a);
 	    
 	}
-
-	/*
-	thetalist[p1][1] += a;
-	thetalist[p2][1] += a;
-	thetalist[p3][1] += a;
-	thetalist[p4][1] += a;
-	thetalist[p5][1] += a;
-	thetalist[p6][1] += a;
-	thetalist[p7][1] += a;
-	thetalist[p8][1] += a;
-	thetalist[p9][1] += a;
-	*/
 	
     }
 
@@ -1159,18 +1496,6 @@ window.onload = function init()
 	    thetamlist[changelist[i]] = rotateZ(a);
 	    
 	}
-
-	/*
-	thetalist[p1][2] += a;
-	thetalist[p2][2] += a;
-	thetalist[p3][2] += a;
-	thetalist[p4][2] += a;
-	thetalist[p5][2] += a;
-	thetalist[p6][2] += a;
-	thetalist[p7][2] += a;
-	thetalist[p8][2] += a;
-	thetalist[p9][2] += a;
-	*/
 	
     }
 
@@ -1197,18 +1522,6 @@ window.onload = function init()
 	    thetamlist[changelist[i]] = rotateZ(a);
 	    
 	}
-
-	/*
-	thetalist[p1][2] += a;
-	thetalist[p2][2] += a;
-	thetalist[p3][2] += a;
-	thetalist[p4][2] += a;
-	thetalist[p5][2] += a;
-	thetalist[p6][2] += a;
-	thetalist[p7][2] += a;
-	thetalist[p8][2] += a;
-	thetalist[p9][2] += a;
-	*/
 	
     }
 
@@ -1235,24 +1548,12 @@ window.onload = function init()
 	    thetamlist[changelist[i]] = rotateZ(a);
 	    
 	}
-
-	/*
-	thetalist[p1][2] += a;
-	thetalist[p2][2] += a;
-	thetalist[p3][2] += a;
-	thetalist[p4][2] += a;
-	thetalist[p5][2] += a;
-	thetalist[p6][2] += a;
-	thetalist[p7][2] += a;
-	thetalist[p8][2] += a;
-	thetalist[p9][2] += a;
-	*/
 	
     }
 
-    function ChooseR(rmode) {
+    function ChooseR(a,rmode) {
 
-	var a = 5;
+	//var a = 5;
 
 	if (rmode == 0){
 	    RotXTopCCW(a,pieces);
@@ -1281,6 +1582,33 @@ window.onload = function init()
 	else if (rmode == 8){
 	    RotZBotCCW(a,pieces);
 	}
+	else if (rmode == 9){
+	    RotXTopCCW(-a,pieces);
+	}
+	else if (rmode == 10){
+	    RotXMidCCW(-a,pieces);
+	}
+	else if (rmode == 11){
+	    RotXBotCCW(-a,pieces);
+	}
+	else if (rmode == 12){
+	    RotYTopCCW(-a,pieces);
+	}
+	else if (rmode == 13){
+	    RotYMidCCW(-a,pieces);
+	}
+	else if (rmode == 14){
+	    RotYBotCCW(-a,pieces);
+	}
+	else if (rmode == 15){
+	    RotZTopCCW(-a,pieces);
+	}
+	else if (rmode == 16){
+	    RotZMidCCW(-a,pieces);
+	}
+	else if (rmode == 17){
+	    RotZBotCCW(-a,pieces);
+	}
 	
     }
 
@@ -1297,7 +1625,7 @@ window.onload = function init()
 	//console.log("after thetalist reset");
 	
     }
-
+				
     function render() {
  
 	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1312,9 +1640,32 @@ window.onload = function init()
 	
 	if (rotc < 18 && disabled) {
 
-	    ChooseR(rmode);
+	    ChooseR(5,rmode);
 	    
 	    rotc++;
+	}
+	else if (rotc < 6 && scrambled) {
+
+	    ChooseR(15,sArray[0]);
+
+	    rotc++;
+	    
+	}
+	else if (scrambled) {
+
+	    ChooseMove(sArray[0]);
+	    rotc = 0;
+	    resetrot(); //maybe can get away with using it only at end
+	    sArray.shift();
+
+	    if (sArray.length == 0){
+
+		scrambled = false;
+		enablebuts();
+		resetrot();
+		
+	    }
+	    
 	}
 	else if (disabled) {
 	    rotc = 0;

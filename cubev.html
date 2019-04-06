@@ -116,7 +116,7 @@ main()
 <script type="text/javascript" src="testcube.js"></script>
 
 <body>
-<canvas id="gl-canvas" width="512" height="512">
+<canvas id="gl-canvas" width="400" height="400">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>
 
@@ -133,13 +133,17 @@ Oops ... your browser doesn't support the HTML5 canvas element
 </div>
 
 <div class="slidecontainer">
-  <p>z-Axis Rotation</p>
+  <p>Z-Axis Rotation</p>
   <input type="range" min="-135" max="225" value="0" class="slider" id="zSlider">
 </div>
 
 <button class= "rotate" id= "xTopCounter">X Top Counter</button>
 <button class= "rotate" id= "xMidCounter">X Mid Counter</button>
 <button class= "rotate" id= "xBotCounter">X Bot Counter</button>
+
+<button class= "rotate" id= "xTopClock">X Top Clock</button>
+<button class= "rotate" id= "xMidClock">X Mid Clock</button>
+<button class= "rotate" id= "xBotClock">X Bot Clock</button>
 
 <br>
 <br>
@@ -148,12 +152,47 @@ Oops ... your browser doesn't support the HTML5 canvas element
 <button class= "rotate" id= "yMidCounter">Y Mid Counter</button>
 <button class= "rotate" id= "yBotCounter">Y Bot Counter</button>
 
+<button class= "rotate" id= "yTopClock">Y Top Clock</button>
+<button class= "rotate" id= "yMidClock">Y Mid Clock</button>
+<button class= "rotate" id= "yBotClock">Y Bot Clock</button>
+
 <br>
 <br>
 
 <button class= "rotate" id= "zTopCounter">Z Top Counter</button>
 <button class= "rotate" id= "zMidCounter">Z Mid Counter</button>
 <button class= "rotate" id= "zBotCounter">Z Bot Counter</button>
+
+<button class= "rotate" id= "zTopClock">Z Top Clock</button>
+<button class= "rotate" id= "zMidClock">Z Mid Clock</button>
+<button class= "rotate" id= "zBotClock">Z Bot Clock</button>
+
+<br>
+<br>
+
+Scramble Value: <input type="text" id="svalue" size="10">
+<br>
+<button class= "rotate" id= "scramble">Check Value</button>
+
+<br>
+<br>
+
+Test: <input type="text" id="fname" size="20">
+<a id="downloadAnchorElem" style="display: none">Help</a>
+<br>
+<button id="export">Export Values</button>
+
+<br>
+<br>
+
+<label for="avatar">Choose a text file:</label>
+
+<input type="file"
+       id="avatar" name="avatar">
+
+<br>
+
+<button id="load">Load State from File</button>
 
 </body>
 </html>
