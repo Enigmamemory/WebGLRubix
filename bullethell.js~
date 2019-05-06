@@ -1,0 +1,30 @@
+"use strict";
+
+var canvas;
+var gl;
+
+var vbufList = [];
+var cbufList = [];
+
+var
+
+window.onload = function init()
+{
+
+    /*========= SET UP CANVAS ============*/
+    canvas = document.getElementById("gl-canvas");
+
+    gl = WebGLUtils.setupWebGL(canvas);
+    if (!gl) { alert( "WebGL isn't available" ); }
+
+    gl.viewport( 0, 0, canvas.width, canvas.height );
+    gl.clearColor( 0.5, 0.5, 0.5, 1.0 );
+    
+    gl.enable(gl.DEPTH_TEST);;
+
+    /*========= INITIALIZE/COMPILE SHADER SOURCES =============*/
+
+    var program = initShaders( gl, "vertex-shader", "fragment-shader");
+    gl.useProgram(program);
+
+}

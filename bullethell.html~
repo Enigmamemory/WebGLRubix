@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+
+  <script id="vertex-shader" type="x-shader/x-vertex">
+
+  </script>
+
+  <script id="fragment-shader" type="x-shader/x-fragment">
+
+</html>
