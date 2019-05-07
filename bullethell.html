@@ -6,7 +6,11 @@
     attribute vec4 vPosition;
     attribute vec4 vColor;
 
+    attribute vec2 a_texcoord;
+
     varying vec4 fColor;
+
+    varying vec2 v_texcoord;
 
     uniform vec3 theta;
     uniform mat4 model;
@@ -36,10 +40,12 @@
 
 	mat4 view = rz * ry * rx;
 
-	fColor = vColor;
+        fColor = vColor;
 
 	gl_Position = view  * model * vPosition;
-	gl_Position.z = -gl_Position.z;
+        gl_Position.z = -gl_Position.z;
+
+        v_texcoord = a_texcoord;
 
     }
     
@@ -51,10 +57,14 @@
       
     varying vec4 fColor;
 
+    varying vec2 v_texcoord;
+
+    uniform sampler2D u_texture;
+    
     void main()
     {
     
-       gl_FragColor = fColor;
+       gl_FragColor = texture2D(u_texture, v_texcoord) * fColor;
 
     }
     
