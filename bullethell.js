@@ -20,6 +20,15 @@ var time6 = 0;
 var time7 = 0;
 var time8 = 0;
 var time9 = 0;
+var time10 = 0;
+var p0over = false;
+var p1over = false;
+var p2over = false;
+
+var phase = 0;
+
+//var gameover = false;
+//var victory = false;
 
 //ADDED FOR LIGHTING
 var lightPosition = vec4( 1.0, 1.0, 1.0, 0.0 );
@@ -138,7 +147,7 @@ var vd = 0.03
 var pTranslate = [0,-0.8,0];
 var pHitbox = [0,0.3*vd-0.8,vd*0.3]; //x, y, sphere radius
 
-var pHealth = 3;
+var pHealth = 9999; //3
 var pInv = false;
 var pLastInv;
 var pThisInv;
@@ -835,7 +844,7 @@ var tEnemy = [
     
 ];
 
-var vd4 = 0.03;
+var vd4 = 0.025;
 
 var ebNumVertices = 36;
 
@@ -1478,12 +1487,50 @@ window.onload = function init()
     
 	}
 
+	else if (epType == 2) {
+
+	    var aim = EnemyAimed(eBuf);
+	    var speed = ePath[eBuf][1];
+	    ChangeEnemyPathTo([0,speed*aim[0],speed*aim[1]], eBuf);
+	    epx = speed * aim[0] * timedif;
+	    epy = speed * aim[1] * timedif;
+	    
+	}
+
+	else if (epType == 3) {
+
+	    var movet = ePath[eBuf][3];
+	    //console.log(movet);
+	    var change = ePath[eBuf][4] * timedif;
+	    //console.log(change);
+	    var angle = ePath[eBuf][5];
+	    //console.log(angle);
+	    var achange = ePath[eBuf][6] * timedif;
+	    //console.log(angle);
+	    var rad = radians(angle);
+	    //console.log(rad);
+	    epx = ePath[eBuf][1] * movet * Math.cos(rad);
+	    epy = ePath[eBuf][2] * movet * Math.sin(rad);
+	    //console.log(epx);
+	    //console.log(epy);
+
+	    ePath[eBuf][3] += change;
+	    ePath[eBuf][5] += achange;
+	    
+	}
+
 	var ex = eTranslate[eBuf][0];
 	var ey = eTranslate[eBuf][1];
 	var ez = eTranslate[eBuf][2];
 
 	if (epType == 1) {
 
+	    ey = eSpawn[eBuf][1];
+	    
+	}
+	else if (epType == 3) {
+
+	    ex = eSpawn[eBuf][0];
 	    ey = eSpawn[eBuf][1];
 	    
 	}
@@ -1509,6 +1556,56 @@ window.onload = function init()
     function ChangeEnemyPathTo(tarray, eBuf) {
 
 	ePath[eBuf] = tarray;
+	
+    }
+
+    function EnemyAimed(eBuf) {
+
+	var ex = eHitbox[eBuf][0];
+	var ey = eHitbox[eBuf][1];
+	var px = pHitbox[0];
+	var py = pHitbox[1];
+
+	var xdif = px - ex;
+	var ydif = py - ey;
+
+	var aim = normalize([xdif, ydif], false);
+
+	return aim;
+	
+    }
+    
+    function bossbounce() {
+	
+	var eBuf = 10;
+	while (eBuf < eSize) {
+
+	    if (eActivate[eBuf]) {
+
+		if (eTranslate[eBuf][0] < -0.8 || eTranslate[eBuf][0] > 0.8) {
+
+		    if (eBossChangedX > 5) {
+			ePath[eBuf][1] *= -1;
+			eBossChangedX = 0;
+		    }
+		    //console.log("activate");
+
+		    //console.log(ePath[eBuf]);
+		    
+		}
+		if (eTranslate[eBuf][1] < -0.8 || eTranslate[eBuf][1] > 0.8) {
+
+		    if (eBossChangedY > 5) {
+			ePath[eBuf][2] *= -1;
+			eBossChangedY = 0;
+		    }
+		    
+		}
+		
+	    }
+
+	    eBuf += 1;
+	}
 	
     }
 
@@ -1986,46 +2083,6 @@ window.onload = function init()
 	}
 	
     }
-
-    function changeBossMove(tarray, ebuf) {
-
-	ePath[eBuf] = tarray;
-	
-    }
-    
-    function bossbounce() {
-	
-	var eBuf = 10;
-	while (eBuf < eSize) {
-
-	    if (eActivate[eBuf]) {
-
-		if (eTranslate[eBuf][0] < -0.8 || eTranslate[eBuf][0] > 0.8) {
-
-		    if (eBossChangedX > 5) {
-			ePath[eBuf][1] *= -1;
-			eBossChangedX = 0;
-		    }
-		    //console.log("activate");
-
-		    //console.log(ePath[eBuf]);
-		    
-		}
-		if (eTranslate[eBuf][1] < -0.8 || eTranslate[eBuf][1] > 0.8) {
-
-		    if (eBossChangedY > 5) {
-			ePath[eBuf][2] *= -1;
-			eBossChangedY = 0;
-		    }
-		    
-		}
-		
-	    }
-
-	    eBuf += 1;
-	}
-	
-    }
     
     var makeone = false;
 
@@ -2035,8 +2092,6 @@ window.onload = function init()
 
     var lasttime;
     var thistime;
-
-    var phase = 0;
 
     /*
     console.log("list of used attributes");
@@ -2056,7 +2111,6 @@ window.onload = function init()
 
 	if (time1 >= 21) {
 
-	    //EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.2, 225, 5], 0);
 	    EnemyTypeFires(1, [0, -0.025, -0.025], 0);
 	    EnemyTypeFires(1, [0, -0.0125, -0.025], 0);
 	    EnemyTypeFires(1, [0, 0, -0.025], 0);
@@ -2110,64 +2164,346 @@ window.onload = function init()
 
 	if (time1 >= 35) {
 
+	    EnemyTypeFires(1, [1, 5, -1.2, 0, -0.03], 0);
+	    EnemyTypeFires(1, [1, 3, -0.7, 0, -0.03], 0);
+	    EnemyTypeFires(1, [1, 4, -0.5, 0, -0.03], 0);
+	    EnemyTypeFires(1, [1, 1, -2.0, 0, -0.03], 0);
+	    EnemyTypeFires(1, [1, 2, -0.8, 0, -0.03], 0);
+	    EnemyTypeFires(1, [1, 5,  1.2, 0, 0.03], 0);
+	    EnemyTypeFires(1, [1, 3,  0.7, 0, 0.03], 0);
+	    EnemyTypeFires(1, [1, 4,  0.5, 0, 0.03], 0);
+	    EnemyTypeFires(1, [1, 1,  2.0, 0, 0.03], 0);
+	    EnemyTypeFires(1, [1, 2,  0.8, 0, 0.03], 0);
+
+	    time1 = 0;
+	    
 	}
 
-	if (time2 >= 25) {
-	
-	    EnemyTypeFires(0, [0, -0.025, -0.025], 0);
-	    EnemyTypeFires(0, [0, 0, -0.025], 0);
-	    EnemyTypeFires(0, [0, 0.025, -0.025], 0);
+	if (time2 >= 25 && time1 >= 20) {
+
+	    EnemyTypeFires(1, [1, -0.5, 0, 0, -0.04], 0);
+	    EnemyTypeFires(1, [1, -0.75, 0, 0, -0.04], 0);
+	    EnemyTypeFires(1, [1, -0.75, 0, 0, 0.04], 0);
+	    EnemyTypeFires(1, [1, -0.5, 0, 0, 0.04], 0);
 	    
 	    time2 = 0;
 
 	}
 
-	if (time3 >= 14 && time1 <= 25) {
+	if (time3 >= 47) {
+
+	    EnemyTypeFires(1, [1, 5, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 7, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 10, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 12, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 12,  0.7, 0,  0.02], 0);
+	    EnemyTypeFires(1, [1, 10,  0.7, 0,  0.02], 0);
+	    EnemyTypeFires(1, [1, 7,  0.7, 0,  0.02], 0);
+	    EnemyTypeFires(1, [1, 5,  0.7, 0,  0.02], 0);
 
 	    time3 = 0;
+
+	}
+
+	if (time4 >= 6 && time5 >= 80) {
+
+	    EnemyTypeFires(1, [0, -0.025, -0.025], 0);
+	    EnemyTypeFires(1, [0, -0.0125, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0.0125, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0.025, -0.025], 0);
+
+	    time4 = 0;
 	    
 	}
+
+	if (time5 >= 100) {
+
+	    createEnemy([-0.25,-1,0], 180, [0,  0, 0.03], 0);
+	    createEnemy([-0.5,-1,0], 180, [0, 0, 0.03], 0);
+	    createEnemy([ 0.25,-1,0], 180, [0,  0, 0.03], 0);
+	    createEnemy([ 0.5,-1,0], 180, [0, 0, 0.03], 0);
+
+	    time5 = 0;
+	    
+	}
+
+	if (time6 >= 10 && time3 >= 25) {
+
+	    EnemyTypeFires(0, [2, 0.15], 0);
+	    time6 = 0;
+	    
+	}
+	if (time7 >= 20) {
+
+	    EnemyTypeFires(1, [2, 0.05], 0);
+	    EnemyTypeFires(1, [0, 0.01, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0, -0.025], 0);
+	    EnemyTypeFires(1, [0, -0.01, -0.025], 0);
+	    time7 = 0;
+	}
+	
 	
     }
 
-    function phases(phase) {
+    function phase2() {
+
+	if (time1 >= 5 && time9 >= 300 && time9 <= 350) { //add conditional
+
+	    EnemyTypeFires(1, [2, 0.08], 0);
+	    time1 = 0;
+	    
+	}
+
+	if (time1 >= 5 && time9 >= 400 && time9 <= 450) { //add conditional
+
+	    EnemyTypeFires(1, [2, 0.08], 0);
+	    time1 = 0;
+	    
+	}
+
+	if (time2 >= 130 && time9 >= 400) {
+
+	    createEnemy([-1, 0.8,0], 0, [1, 0.5, 1.5, 0, 0.02], 0);
+	    createEnemy([-1, 0.7,0], 0, [1, 0.5, 1.5, 0, 0.02], 0);
+	    createEnemy([-1, 0.6,0], 0, [1, 0.5, 1.5, 0, 0.02], 0);
+	    createEnemy([-1, 0.5,0], 0, [1, 0.5, 1.5, 0, 0.02], 0);
+
+	    time2 = 0;
+	    
+	}
+
+	if (time3 >= 230 && time9 >= 300) {
+
+	    createEnemy([1, -0.8,0], 0, [1, -0.5, -1.5, 0, -0.02], 0);
+	    createEnemy([1, -0.7,0], 0, [1, -0.5, -1.5, 0, -0.02], 0);
+	    createEnemy([1, -0.6,0], 0, [1, -0.5, -1.5, 0, -0.02], 0);
+	    createEnemy([1, -0.5,0], 0, [1, -0.5, -1.5, 0, -0.02], 0);
+	    time3 = 0;
+	    
+	}
+
+	if (time4 >= 60 && time9 <= 300) {
+
+	    createEnemy([-1, -0.8,0], 0, [2, 0.08], 0);
+	    createEnemy([1, 0.8,0], 0, [2, 0.08], 0);
+	    createEnemy([1, -0.8,0], 0, [2, 0.08], 0);
+	    createEnemy([-1, 0.8,0], 0, [2, 0.08], 0);
+	    time4 = 0;
+	    
+	}
+
+	if (time5 >= 5 && time9 >= 320 && time9 <= 380) {
+
+	    EnemyTypeFires(0, [3, -0.5, 0.5, 0, 0.05, 45, 2], 0);
+	    EnemyTypeFires(0, [3, -0.7, 0.7, 0, 0.05, 45, 2], 0);
+	    EnemyTypeFires(0, [3, -0.9, 0.9, 0, 0.05, 45, 2], 0);
+	    time5 = 0;
+	    
+	}
+
+	if (time6 >= 5 && time9 >= 420 && time9 <= 480) {
+
+	    EnemyTypeFires(0, [3, -0.5, 0.5, 0, 0.05, 225, 2], 0);
+	    EnemyTypeFires(0, [3, -0.7, 0.7, 0, 0.05, 225, 2], 0);
+	    EnemyTypeFires(0, [3, -0.9, 0.9, 0, 0.05, 225, 2], 0);
+	    time6 = 0;
+	    
+	}
+
+	if (time7 >= 10 && time9 <= 300) {
+
+	    EnemyTypeFires(0, [2, 0.05], 0);
+	    time7 = 0;
+	    
+	}
+
+	if (time8 >= 20) {
+
+	    EnemyTypeFires(1, [0, 0.1, 0.1], 0);
+	    EnemyTypeFires(1, [0, 0, 0.1], 0);
+	    EnemyTypeFires(1, [0, -0.1, 0.1], 0);
+	    EnemyTypeFires(1, [0, -0.1, 0], 0);
+	    EnemyTypeFires(1, [0, -0.1, -0.1], 0);
+	    EnemyTypeFires(1, [0, 0, -0.1], 0);
+	    EnemyTypeFires(1, [0, 0.1, -0.1], 0);
+	    EnemyTypeFires(1, [0, 0.1, 0], 0);
+
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 225, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 270, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 315, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 0, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 45, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 90, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 135, 10], 0);
+	    EnemyTypeFires(1, [3, 0.5, 0.5, 0, 0.05, 180, 10], 0);
+
+	    time8 = 0;
+	    
+	}
+
+	if (time9 >= 500) {
+
+	    time9 = 0;
+	    
+	}
+	    
+    }
+
+    function phase3() {
+
+	if (time1 >= 90) {
+
+	    ChangeEnemyPathTo([2,0.08], 10);
+	    time1 = 0;
+	    
+	}
+
+	if (time2 >= 20 && time9 >= 200) {
+
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 170, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 180, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 190, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, -10, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 0, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 10, 3], 0);
+	    
+	    time2 = 0;
+	    
+	}
+	
+	if (time3 >= 10 && time2 >= 10 && time9 >= 200) {
+
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 100, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 90, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 80, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 280, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 270, 3], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 260, 3], 0);
+	    
+	    time3 = 0;
+	    
+	}
+
+	if (time4 >= 4) {
+
+	    EnemyTypeFires(0, [2, 0.08], 0);
+
+	    time4 = 0;
+	    
+	}
+
+	if (time5 >= 80) {
+
+	    createEnemy(eTranslate[10], 0, [3, 0.3, 0.3, 0, 0.05, 0, 10], 0);
+	    createEnemy(eTranslate[10], 0, [3, 0.3, 0.3, 0, 0.05, 90, 10], 0);
+	    createEnemy(eTranslate[10], 0, [3, 0.3, 0.3, 0, 0.05, 180, 10], 0);
+	    createEnemy(eTranslate[10], 0, [3, 0.3, 0.3, 0, 0.05, 270, 10], 0);
+	    
+	    time5 = 0;
+
+	}
+
+	if (time6 >= 10) {
+
+	    EnemyTypeFires(0, [0, 0.07, 0], 0);
+	    EnemyTypeFires(0, [0, -0.07, 0], 0);
+	    EnemyTypeFires(0, [0, 0, -0.07], 0);
+	    EnemyTypeFires(0, [0, 0, 0.07], 0);
+
+	    time6 = 0;
+	    
+	}
+
+	/*
+	if (time7 >= 250) {
+
+	    ChangeEnemyPathTo([0,0,0], 10);
+	    time7 = 0;
+	    
+	}
+	*/
+
+	if (time8 >= 10) {
+
+	    EnemyTypeFires(1, [3, -0.3, 0.3, 0, 0.05, time9, 8], 0);
+	    EnemyTypeFires(1, [3, -0.3, 0.3, 0, 0.05, 90+time9, 8], 0);
+	    EnemyTypeFires(1, [3, -0.3, 0.3, 0, 0.05, 180+time9, 8], 0);
+	    EnemyTypeFires(1, [3, -0.3, 0.3, 0, 0.05, 270+time9, 8], 0);
+
+	    time8 = 0;
+	    
+	}
+
+	if (time10 >= 10) {
+
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 90+time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 180+time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 270+time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 45+time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 135+time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 225+time9, 2], 0);
+	    EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.05, 315+time9, 2], 0);
+
+	    time10 = 0;
+	    
+	}
+	
+	if (time9 >= 500) {
+
+	    time9 = 0;
+	    
+	}
+
+    }
+    
+    function phases() {
 
 	if (phase == 0) {
 
+	    //console.log("running");
 	    phase0();
 	    
 	}
 	else if (phase == 1) {
 
-	    //phase1();
+	    phase1();
 	    
 	}
 	else if (phase == 2) {
 	    
-	    //phase2();
+	    phase2();
 	    
 	}
 	else if (phase == 3) {
 
-	    //phase3();
+	    phase3();
 	    
 	}
 
-	/*
-	if (eHealth[21] < 500) {
+	
+	if (eHealth[10] < 500 && p2over == false) {
 
+	    p2over = true;
 	    phase = 3;
+	    //changeEnemyPathTo([0,0.05,0.03], 21);
+	    time1 = 0;
+	    time2 = 0;
+	    time3 = 0;
+	    time4 = 0;
+	    time5 = 0;
+	    time6 = 0;
+	    time7 = 0;
+	    time8 = 0;
+	    time9 = 0;
 	    
 	}
-	else if (eHealth[21] < 1000) {
+	else if (eHealth[10] < 1000 && p1over == false) {
 
+	    p1over = true;
 	    phase = 2;
-
-	}
-	else if (eHealth[21] < 1500) [
-
-	    phase = 1;
-	    changeBossMove([0,0.05,0], 21);
+	    ChangeEnemyPathTo([0,0.05,0.03], 10);
 	    time1 = 0;
 	    time2 = 0;
 	    time3 = 0;
@@ -2179,7 +2515,23 @@ window.onload = function init()
 	    time9 = 0;
 
 	}
-	*/
+	else if (eHealth[10] < 1500 && p0over == false) {
+
+	    p0over = true;
+	    phase = 1;
+	    ChangeEnemyPathTo([0,0.05,0], 10);
+	    time1 = 0;
+	    time2 = 0;
+	    time3 = 0;
+	    time4 = 0;
+	    time5 = 0;
+	    time6 = 0;
+	    time7 = 0;
+	    time8 = 0;
+	    time9 = 0;
+
+	}
+	
 
 	return phase;
 	
@@ -2187,6 +2539,8 @@ window.onload = function init()
     
     function render() {
 
+	var curHealth = pHealth;
+	document.getElementById("info").innerHTML = "HP: " + curHealth.toString();
 
 	/*================Time Related Operations==========*/
 	var timedif;
@@ -2209,6 +2563,7 @@ window.onload = function init()
 	    time7 += timedif;
 	    time8 += timedif;
 	    time9 += timedif;
+	    time10 += timedif;
 	}
 
 	/*===============DRAWING OPERATIONS==============*/
@@ -2254,6 +2609,19 @@ window.onload = function init()
 	
 	gl.drawElements(gl.TRIANGLES, txNumVertices, gl.UNSIGNED_BYTE, 0);
 
+	if (curHealth <= 0) {
+
+	    document.getElementById("info").innerHTML = "Game Over";
+	    return;
+	    
+	}
+	if (eHealth[10] <= 0) {
+
+	    document.getElementById("info").innerHTML = "You Win";
+	    return;
+	    
+	}
+	
 	/*===============PLAYER MODEL==============*/
 	
 	var playerx = pTranslate[0];
@@ -2524,13 +2892,13 @@ window.onload = function init()
 		
 	if (makeone == false) {
 
-	    createEnemy([0,0.5,0], 0, [0, 0.05, 0], 1);
+	    createEnemy([0,0.5,0], 0, [0, 0, 0], 1);
 	    //createEnemy([0.5,0.5,0], 180, [1, 1, -0.75, 0, -0.05 ], 0);
 	    makeone = true;
 	    
 	}
 	
-	phase0();
+	phases();
 	
 	//console.log(totaltime1);
 	bossbounce();
