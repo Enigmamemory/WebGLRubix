@@ -7,8 +7,33 @@ var vbufList = [];
 var cbufList = [];
 var ibufList = [];
 var tbufList = [];
+var nbufList = [];
 
 var theta = [0,0,0];
+
+var time1 = 0;
+var time2 = 0;
+var time3 = 0;
+var time4 = 0;
+var time5 = 0;
+var time6 = 0;
+var time7 = 0;
+var time8 = 0;
+var time9 = 0;
+
+//ADDED FOR LIGHTING
+var lightPosition = vec4( 1.0, 1.0, 1.0, 0.0 );
+var lightAmbient = vec4(0.8, 0.8, 0.8, 1.0);
+var lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
+var lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+
+var materialAmbient = vec4( 0.8, 0.8, 0.8, 1.0 );
+var materialDiffuse = vec4( 1.0, 0.8, 0.8, 1.0);
+var materialSpecular = vec4( 1.0, 0.8, 0.8, 1.0 );
+var materialShininess = 100.0;
+
+var ambientColor, diffuseColor, specularColor;
+//STOPPED HERE
 
 var thetaLoc;
 var modelLoc;
@@ -18,6 +43,40 @@ var textLoc;
 /*========================== DATA ============================*/
 
 //background texture variables
+
+function calcNorm(vertices,indices){
+
+    var sets = 0;
+    var length = indices.length / 3;
+    var narray = [];
+
+    while (sets < length) {
+
+	var a = indices[3*sets];
+	var b = indices[3*sets + 1];
+	var c = indices[3*sets + 2];
+
+	var pa = vertices[a];
+	var pb = vertices[b];
+	var pc = vertices[c];
+
+	var v1 = subtract( pb, pa );
+	var v2 = subtract( pc, pa );
+
+	var normal = cross(v1, v2);
+	var normal = vec3(normal);
+
+	narray.push(normal);
+	narray.push(normal);
+	narray.push(normal);
+
+	sets += 1;
+	
+    }
+
+    return narray;
+
+}
 
 var vd0 = 0.99;
 
@@ -60,6 +119,8 @@ var iTexture = [
     
 ];
 
+var nTexture = calcNorm(vTexture,iTexture);
+
 var tTexture = [
 
     vec2(0,0),
@@ -75,9 +136,16 @@ var tTexture = [
 var vd = 0.03
 
 var pTranslate = [0,-0.8,0];
-var pHitbox = [0,0.5*vd-0.8,vd*0.5]; //x, y, sphere radius
+var pHitbox = [0,0.3*vd-0.8,vd*0.3]; //x, y, sphere radius
 
 var pHealth = 3;
+var pInv = false;
+var pLastInv;
+var pThisInv;
+var pInvDif = 0;
+
+var pRight = rotateY(0);
+var pLeft = rotateY(0);
 
 var pRCurrent = mat4(1,0,0,0,
 		     0,1,0,0,
@@ -311,6 +379,21 @@ var iPlayer = [
    
 ];
 
+var nPlayer = calcNorm(vPlayer,iPlayer);
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+nPlayer.push(vec3(1,0,0));
+//nPlayer.push(vec3(1,0,0));
+//nPlayer.push(vec3(1,0,0));
+
+
 var tPlayer = [
 
     //cockpit back
@@ -473,6 +556,14 @@ var iPBullet = [
       
 ];
 
+var nPBullet = calcNorm(vPBullet,iPBullet);
+nPBullet.push(vec3(1,0,0));
+nPBullet.push(vec3(1,0,0));
+nPBullet.push(vec3(1,0,0));
+nPBullet.push(vec3(1,0,0));
+//nPBullet.push(vec3(1,0,0));
+//nPBullet.push(vec3(1,0,0));
+
 var tPBullet = [
 
     //top right
@@ -518,6 +609,9 @@ var eRNew = new Array(eSize);
 var eStart = 2 + pbSize;
 
 var eNumVertices = 30;
+
+var eBossChangedX = 0; //This should be in array but oh well
+var eBossChangedY = 0;
 
 var vEnemy = [
 
@@ -687,6 +781,14 @@ var iEnemy = [
 
 ];
 
+var nEnemy = calcNorm(vEnemy,iEnemy);
+nEnemy.push(vec3(1,0,0));
+nEnemy.push(vec3(1,0,0));
+nEnemy.push(vec3(1,0,0));
+nEnemy.push(vec3(1,0,0));
+nEnemy.push(vec3(1,0,0));
+//nEnemy.push(vec3(1,0,0));
+
 var tEnemy = [
 
     //hull top
@@ -737,18 +839,18 @@ var vd4 = 0.03;
 
 var ebNumVertices = 36;
 
-var ebActivate = new Array(100);
-var ebSize = eActivate.length;
+var ebActivate = new Array(200);
+var ebSize = ebActivate.length;
 
-var ebPath = new Array(eSize);
-var ebType = new Array(eSize);
+var ebPath = new Array(ebSize);
+var ebType = new Array(ebSize);
 
-var ebTranslate = new Array(eSize);
-var ebHitbox = new Array(eSize);
-var ebSpawn = new Array(eSize);
+var ebTranslate = new Array(ebSize);
+var ebHitbox = new Array(ebSize);
+var ebSpawn = new Array(ebSize);
 
-var ebRCurrent = new Array(eSize);
-var ebRNew = new Array(eSize);
+var ebRCurrent = new Array(ebSize);
+var ebRNew = new Array(ebSize);
 
 var ebStart = 2 + pbSize + eSize;
 
@@ -849,6 +951,8 @@ var iEBullet = [
     
 ];
 
+var nEBullet = calcNorm(vEBullet,iEBullet);
+
 var tEBullet = [
 
    //front
@@ -947,6 +1051,11 @@ window.onload = function init()
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
 
+    //NEED TO SET THIS IN HTML FOR LIGHTING
+    var vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vNormal );
+    
     var vTexcoord = gl.getAttribLocation( program, "a_texcoord");
     gl.vertexAttribPointer( vTexcoord, 2, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vTexcoord );
@@ -972,6 +1081,11 @@ window.onload = function init()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tIBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(iTexture), gl.STATIC_DRAW);
 
+    //ADDED FOR LIGHTING
+    var tNBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, tNBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(nTexture), gl.STATIC_DRAW );
+
     var tTBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, tTBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(tTexture), gl.STATIC_DRAW );
@@ -979,6 +1093,7 @@ window.onload = function init()
     vbufList.push(tVBuffer);
     cbufList.push(tCBuffer);
     ibufList.push(tIBuffer);
+    nbufList.push(tNBuffer);
     tbufList.push(tTBuffer);
     
     var vBuffer = gl.createBuffer();
@@ -993,6 +1108,11 @@ window.onload = function init()
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, iBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(iPlayer), gl.STATIC_DRAW);
 
+    //ADDED FOR LIGHTING
+    var nBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(nPlayer), gl.STATIC_DRAW );
+
     var tBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(tPlayer), gl.STATIC_DRAW );
@@ -1000,6 +1120,7 @@ window.onload = function init()
     vbufList.push(vBuffer);
     cbufList.push(cBuffer);
     ibufList.push(iBuffer);
+    nbufList.push(nBuffer);
     tbufList.push(tBuffer);
 
     var pbCount = 0;
@@ -1018,6 +1139,11 @@ window.onload = function init()
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, pbIBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(iPBullet), gl.STATIC_DRAW);
 
+	//ADDED FOR LIGHTING
+	var pbNBuffer = gl.createBuffer();
+	gl.bindBuffer( gl.ARRAY_BUFFER, pbNBuffer );
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(nPBullet), gl.STATIC_DRAW );
+
 	var pbTBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, pbTBuffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(tPBullet), gl.STATIC_DRAW );
@@ -1025,6 +1151,7 @@ window.onload = function init()
 	vbufList.push(pbVBuffer);
 	cbufList.push(pbCBuffer);
 	ibufList.push(pbIBuffer);
+	nbufList.push(pbNBuffer);
 	tbufList.push(pbTBuffer);
 	
 	pbCount += 1;
@@ -1052,6 +1179,11 @@ window.onload = function init()
 	var eIBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, eIBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(iEnemy), gl.STATIC_DRAW);
+
+	//ADDED FOR LIGHTING
+	var eNBuffer = gl.createBuffer();
+	gl.bindBuffer( gl.ARRAY_BUFFER, eNBuffer );
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(nEnemy), gl.STATIC_DRAW );
 	
 	var eTBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, eTBuffer );
@@ -1060,6 +1192,7 @@ window.onload = function init()
 	vbufList.push(eVBuffer);
 	cbufList.push(eCBuffer);
 	ibufList.push(eIBuffer);
+	nbufList.push(eNBuffer);
 	tbufList.push(eTBuffer);
 	
 	eCount += 1;
@@ -1081,6 +1214,11 @@ window.onload = function init()
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebIBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(iEBullet), gl.STATIC_DRAW);
 
+	//ADDED FOR LIGHTING
+	var ebNBuffer = gl.createBuffer();
+	gl.bindBuffer( gl.ARRAY_BUFFER, ebNBuffer );
+	gl.bufferData( gl.ARRAY_BUFFER, flatten(nEBullet), gl.STATIC_DRAW );
+
 	var ebTBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ARRAY_BUFFER, ebTBuffer );
 	gl.bufferData( gl.ARRAY_BUFFER, flatten(tEBullet), gl.STATIC_DRAW );
@@ -1088,11 +1226,17 @@ window.onload = function init()
 	vbufList.push(ebVBuffer);
 	cbufList.push(ebCBuffer);
 	ibufList.push(ebIBuffer);
+	nbufList.push(ebNBuffer);
 	tbufList.push(ebTBuffer);
 	
 	ebCount += 1;
     }
 
+    //ADDED FOR LIGHTING
+    var ambientProduct = mult(lightAmbient, materialAmbient);
+    var diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    var specularProduct = mult(lightSpecular, materialSpecular);
+    
     /*=====================Javascript Functions============*/
 
     document.onkeydown = function() {
@@ -1132,12 +1276,14 @@ window.onload = function init()
 	}
 	if (key.keyCode == '37') {
 	    pKeys[2] = false;
+	    pLeft = rotateY(0);
 	}
 	if (key.keyCode == '38') {
 	    pKeys[3] = false;
 	}
 	if (key.keyCode == '39') {
 	    pKeys[4] = false;
+	    pRight = rotateY(0);
 	}
 	if (key.keyCode == '40') {
 	    pKeys[5] = false;
@@ -1201,24 +1347,26 @@ window.onload = function init()
 	    if (pTranslate[0] > -1+vd) {
 		pTranslate[0] -= move*timedif;
 		pHitbox[0] -= move*timedif;
+		pLeft = rotateY(-30);
 	    }
 	}
 	if (pKeys[3]) {
 	    if (pTranslate[1] < 1-2*vd) {
 		pTranslate[1] += move*timedif;
-		pHitbox[0] += move*timedif;
+		pHitbox[1] += move*timedif;
 	    }
 	}
 	if (pKeys[4]) {
 	    if (pTranslate[0] < 1-vd) {
 		pTranslate[0] += move*timedif;
 		pHitbox[0] += move*timedif;
+		pRight = rotateY(30);
 	    }
 	}
 	if (pKeys[5]) {
 	    if (pTranslate[1] > -1) {
 		pTranslate[1] -= move*timedif;
-		pHitbox[0] -= move*timedif;
+		pHitbox[1] -= move*timedif;
 	    }
 	}
 	    
@@ -1275,7 +1423,7 @@ window.onload = function init()
 		    eHit = [start[0], start[1] + 1.5*3*vd3, 1.2*3*vd3];
 		    eHitbox[eBuf] = eHit;
 
-		    eHealth[eBuf] = 20;
+		    eHealth[eBuf] = 2000;
 
 		}
 		else {
@@ -1466,12 +1614,50 @@ window.onload = function init()
     
 	}
 
+	else if (epType == 2) {
+		    
+	    var aim = EBulletAimed(ebBuf);
+	    var speed = ebPath[ebBuf][1];
+	    ChangeEBulletPathTo([0,speed*aim[0],speed*aim[1]], ebBuf);
+	    epx = speed * aim[0] * timedif;
+	    epy = speed * aim[1] * timedif;
+	    
+	}
+
+	else if (epType == 3) {
+
+	    var movet = ebPath[ebBuf][3];
+	    //console.log(movet);
+	    var change = ebPath[ebBuf][4] * timedif;
+	    //console.log(change);
+	    var angle = ebPath[ebBuf][5];
+	    //console.log(angle);
+	    var achange = ebPath[ebBuf][6] * timedif;
+	    //console.log(angle);
+	    var rad = radians(angle);
+	    //console.log(rad);
+	    epx = ebPath[ebBuf][1] * movet * Math.cos(rad);
+	    epy = ebPath[ebBuf][2] * movet * Math.sin(rad);
+	    //console.log(epx);
+	    //console.log(epy);
+
+	    ebPath[ebBuf][3] += change;
+	    ebPath[ebBuf][5] += achange;
+	    
+	}
+
 	var ex = ebTranslate[ebBuf][0];
 	var ey = ebTranslate[ebBuf][1];
 	var ez = ebTranslate[ebBuf][2];
 
 	if (epType == 1) {
 
+	    ey = ebSpawn[ebBuf][1];
+	    
+	}
+	else if (epType == 3) {
+
+	    ex = ebSpawn[ebBuf][0];
 	    ey = ebSpawn[ebBuf][1];
 	    
 	}
@@ -1489,6 +1675,22 @@ window.onload = function init()
     function ChangeEBulletPathTo(tarray, ebBuf) {
 
 	ebPath[ebBuf] = tarray;
+	
+    }
+
+    function EBulletAimed(ebBuf) {
+
+	var ebx = ebHitbox[ebBuf][0];
+	var eby = ebHitbox[ebBuf][1];
+	var px = pHitbox[0];
+	var py = pHitbox[1];
+
+	var xdif = px - ebx;
+	var ydif = py - eby;
+
+	var aim = normalize([xdif, ydif], false);
+
+	return aim;
 	
     }
 
@@ -1587,6 +1789,25 @@ window.onload = function init()
 	
     }
 
+    function invFrames() {
+
+	if (pInv) {
+
+	    pLastInv = pThisInv;
+	    pThisInv = new Date().getTime();
+	    pInvDif += (pThisInv - pLastInv) / 100;
+
+	    if (pInvDif >= 10) {
+
+		pInv = false;
+		pInvDif = 0;
+		
+	    }
+	    
+	}
+	
+    }
+    
     function eBulletVSPlayer() {
 
 	//console.log("Running");
@@ -1636,23 +1857,103 @@ window.onload = function init()
 		    console.log(hitd);
 		    */
 		    
+		    if (pInv == false) {
+			pHealth -= 1;
+			pInv = true;
+			pThisInv = new Date().getTime();
+
+			console.log(pHealth);
 		    
-		    pHealth -= 1;
+			ebActivate[ebBuf] = false;
+			
+			break;
+		    }
 		    if (pHealth <= 0) {
 			//pActivate[eBuf] = false;
 			console.log("Game Over")
 		    }
-		    console.log(pHealth);
-		    
-		    ebActivate[ebBuf] = false;
-		    
-		    break;
+
 		    
 		}
 		
 	    }
 
 	    ebBuf += 1;
+	    
+	}
+	
+    }
+
+    function EnemyVSPlayer() {
+
+	//console.log("Running");
+	
+	var eBuf = 0;
+
+	while (eBuf < eSize) {
+
+	    //console.log(ebActivate);
+
+	    if (eActivate[eBuf]) {
+
+		//console.log("detect enemy");
+		
+		var ex = eHitbox[eBuf][0];
+		var px = pHitbox[0];
+		var ey = eHitbox[eBuf][1];
+		var py = pHitbox[1];
+
+		var xd = ex - px;
+		var yd = ey - py;
+
+		var dist = Math.sqrt( xd*xd + yd*yd );
+		
+		var hitd = pHitbox[2] + eHitbox[eBuf][2];
+
+		/*
+		console.log(ex);
+		console.log(px);
+		console.log(ey);
+		console.log(py);
+		console.log(dist);
+		console.log(hitd);
+		*/
+
+		
+		if (Math.max(dist, hitd) == hitd) {
+
+		    /*
+		    console.log(ebx);
+		    console.log(ebTranslate[ebBuf][0]);
+		    console.log(eby);
+		    console.log(py);
+		    console.log(ebTranslate[ebBuf][1]);
+		    console.log(xd);
+		    console.log(yd);
+		    console.log(dist);
+		    console.log(hitd);
+		    */
+		    
+		    if (pInv == false) {
+			pHealth -= 1;
+			pInv = true;
+			pThisInv = new Date().getTime();
+
+			console.log(pHealth);
+		    
+			break;
+		    }
+		    if (pHealth <= 0) {
+			//pActivate[eBuf] = false;
+			console.log("Game Over")
+		    }
+
+		    
+		}
+		
+	    }
+
+	    eBuf += 1;
 	    
 	}
 	
@@ -1685,6 +1986,46 @@ window.onload = function init()
 	}
 	
     }
+
+    function changeBossMove(tarray, ebuf) {
+
+	ePath[eBuf] = tarray;
+	
+    }
+    
+    function bossbounce() {
+	
+	var eBuf = 10;
+	while (eBuf < eSize) {
+
+	    if (eActivate[eBuf]) {
+
+		if (eTranslate[eBuf][0] < -0.8 || eTranslate[eBuf][0] > 0.8) {
+
+		    if (eBossChangedX > 5) {
+			ePath[eBuf][1] *= -1;
+			eBossChangedX = 0;
+		    }
+		    //console.log("activate");
+
+		    //console.log(ePath[eBuf]);
+		    
+		}
+		if (eTranslate[eBuf][1] < -0.8 || eTranslate[eBuf][1] > 0.8) {
+
+		    if (eBossChangedY > 5) {
+			ePath[eBuf][2] *= -1;
+			eBossChangedY = 0;
+		    }
+		    
+		}
+		
+	    }
+
+	    eBuf += 1;
+	}
+	
+    }
     
     var makeone = false;
 
@@ -1694,8 +2035,10 @@ window.onload = function init()
 
     var lasttime;
     var thistime;
-    var totaltime1 = 0;
 
+    var phase = 0;
+
+    /*
     console.log("list of used attributes");
     console.log("-----------------------");
     
@@ -1707,33 +2050,145 @@ window.onload = function init()
 	}
 	console.log(gl.getAttribLocation(program, attribInfo.name), attribInfo.name);
     }
+    */
+
+    function phase0 () {
+
+	if (time1 >= 21) {
+
+	    //EnemyTypeFires(1, [3, -0.5, 0.5, 0, 0.2, 225, 5], 0);
+	    EnemyTypeFires(1, [0, -0.025, -0.025], 0);
+	    EnemyTypeFires(1, [0, -0.0125, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0.0125, -0.025], 0);
+	    EnemyTypeFires(1, [0, 0.025, -0.025], 0);
+	    	    
+	    time1 = 0;
+	    
+	}
+
+	if (time2 >= 25) {
+
+	    EnemyTypeFires(0, [0, -0.025, -0.025], 0);
+	    EnemyTypeFires(0, [0, 0, -0.025], 0);
+	    EnemyTypeFires(0, [0, 0.025, -0.025], 0);
+	    
+	    
+	    time2 = 0;
+
+	}
+	
+	if (time3 >= 47) {
+
+	    EnemyTypeFires(1, [1, 5, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 7, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 10, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 12, -0.7, 0, -0.02], 0);
+	    EnemyTypeFires(1, [1, 12,  0.7, 0,  0.02], 0);
+	    EnemyTypeFires(1, [1, 10,  0.7, 0,  0.02], 0);
+	    EnemyTypeFires(1, [1, 7,  0.7, 0,  0.02], 0);
+	    EnemyTypeFires(1, [1, 5,  0.7, 0,  0.02], 0);
+	    
+	    time3 = 0;
+	    
+	}
+
+	if (time4 >= 100) {
+
+	    createEnemy([1,0.7,0], 0, [1, 5, -1, 0, -0.015 ], 0);
+	    createEnemy([-1,0.7,0], 0, [1, 5, 1, 0, 0.015 ], 0);
+	    createEnemy([1,0.7,0], 0, [0, -0.025, 0], 0);
+	    createEnemy([-1,0.7,0], 0, [0, 0.025, 0], 0);
+	    
+	    time4 = 0;
+	    
+	}
+	
+    }
+
+    function phase1() {
+
+	if (time1 >= 35) {
+
+	}
+
+	if (time2 >= 25) {
+	
+	    EnemyTypeFires(0, [0, -0.025, -0.025], 0);
+	    EnemyTypeFires(0, [0, 0, -0.025], 0);
+	    EnemyTypeFires(0, [0, 0.025, -0.025], 0);
+	    
+	    time2 = 0;
+
+	}
+
+	if (time3 >= 14 && time1 <= 25) {
+
+	    time3 = 0;
+	    
+	}
+	
+    }
+
+    function phases(phase) {
+
+	if (phase == 0) {
+
+	    phase0();
+	    
+	}
+	else if (phase == 1) {
+
+	    //phase1();
+	    
+	}
+	else if (phase == 2) {
+	    
+	    //phase2();
+	    
+	}
+	else if (phase == 3) {
+
+	    //phase3();
+	    
+	}
+
+	/*
+	if (eHealth[21] < 500) {
+
+	    phase = 3;
+	    
+	}
+	else if (eHealth[21] < 1000) {
+
+	    phase = 2;
+
+	}
+	else if (eHealth[21] < 1500) [
+
+	    phase = 1;
+	    changeBossMove([0,0.05,0], 21);
+	    time1 = 0;
+	    time2 = 0;
+	    time3 = 0;
+	    time4 = 0;
+	    time5 = 0;
+	    time6 = 0;
+	    time7 = 0;
+	    time8 = 0;
+	    time9 = 0;
+
+	}
+	*/
+
+	return phase;
+	
+    }
     
     function render() {
 
-	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	var tModel = rotateX(0);
-
-	gl.uniform3fv(thetaLoc, theta);
-	gl.uniformMatrix4fv(modelLoc, false, flatten(tModel));
-	gl.uniform1i(textLoc, 0);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, vbufList[0]);
-	gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, cbufList[0]);
-	gl.vertexAttribPointer(vColor, 4, gl.FLOAT,false, 0, 0);
-
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibufList[0]);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, tbufList[0]);
-	gl.vertexAttribPointer(vTexcoord, 2, gl.FLOAT,false, 0, 0);
-
-	gl.bindTexture(gl.TEXTURE_2D, texture);
-	
-	gl.drawElements(gl.TRIANGLES, txNumVertices, gl.UNSIGNED_BYTE, 0);
-
-	
+	/*================Time Related Operations==========*/
 	var timedif;
 	
 	if (firstloop == false) {
@@ -1745,23 +2200,70 @@ window.onload = function init()
 	    timedif = (thistime - lasttime) / 100;
 	    //console.log(timedif)
 	    lasttime = thistime;
-	    totaltime1 += timedif;
+	    time1 += timedif;
+	    time2 += timedif;
+	    time3 += timedif;
+	    time4 += timedif;
+	    time5 += timedif;
+	    time6 += timedif;
+	    time7 += timedif;
+	    time8 += timedif;
+	    time9 += timedif;
 	}
+
+	/*===============DRAWING OPERATIONS==============*/
 	
-	setpTranslate(timedif);
+	gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	pBulletVSEnemy();
-	eBulletVSPlayer();
+	/*===============BACKGROUND TEXTURE==============*/
+	
+	var tModel = rotateX(0);
 
+	gl.uniform3fv(thetaLoc, theta);
+	gl.uniformMatrix4fv(modelLoc, false, flatten(tModel));
+	gl.uniform1i(textLoc, 0);
+
+	//NEED TO SET THESE UNIFORMS IN HTML
+	gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
+		      flatten(ambientProduct));
+	gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
+		      flatten(diffuseProduct) );
+	gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"),
+		      flatten(specularProduct) );
+	gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"),
+		      flatten(lightPosition) );
+	
+	gl.uniform1f(gl.getUniformLocation(program,
+					   "shininess"),materialShininess);
+	
+	gl.bindBuffer(gl.ARRAY_BUFFER, vbufList[0]);
+	gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, cbufList[0]);
+	gl.vertexAttribPointer(vColor, 4, gl.FLOAT,false, 0, 0);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibufList[0]);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, nbufList[0]);
+	gl.vertexAttribPointer(vNormal, 4, gl.FLOAT,false, 0, 0);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, tbufList[0]);
+	gl.vertexAttribPointer(vTexcoord, 2, gl.FLOAT,false, 0, 0);
+
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	
+	gl.drawElements(gl.TRIANGLES, txNumVertices, gl.UNSIGNED_BYTE, 0);
+
+	/*===============PLAYER MODEL==============*/
 	
 	var playerx = pTranslate[0];
 	var playery = pTranslate[1];
 	var playerz = pTranslate[2];
 	var playertm = translate( playerx, playery, playerz);
 
-	pRNew = rotateY(0);
+	//pRNew = rotateY(0);
 	
-	var pRotate = mult(pRNew, pRCurrent);
+	var pRotate = mult(pRight, pLeft);
 	var pModel = mult(playertm, pRotate);
 
 	//pRCurrent = mult(pRNew, pRCurrent);
@@ -1771,6 +2273,18 @@ window.onload = function init()
 	gl.uniformMatrix4fv(modelLoc, false, flatten(pModel));
 	gl.uniform1i(textLoc, 0);
 
+	gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
+		      flatten(ambientProduct));
+	gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
+		      flatten(diffuseProduct) );
+	gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"),
+		      flatten(specularProduct) );
+	gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"),
+		      flatten(lightPosition) );
+	
+	gl.uniform1f(gl.getUniformLocation(program,
+					   "shininess"),materialShininess);
+
 	gl.bindBuffer(gl.ARRAY_BUFFER, vbufList[1]);
 	gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
 
@@ -1779,44 +2293,17 @@ window.onload = function init()
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibufList[1]);
 
+	gl.bindBuffer(gl.ARRAY_BUFFER, nbufList[1]);
+	gl.vertexAttribPointer(vNormal, 4, gl.FLOAT,false, 0, 0);
+	
 	gl.bindBuffer(gl.ARRAY_BUFFER, tbufList[1]);
 	gl.vertexAttribPointer(vTexcoord, 2, gl.FLOAT,false, 0, 0);
 
 	gl.bindTexture(gl.TEXTURE_2D, whitetexture);
 	
 	gl.drawElements(gl.TRIANGLES, pNumVertices, gl.UNSIGNED_BYTE, 0);
-	
-	if (makeone == false) {
 
-	    createEnemy([0,0.5,0], 0, [0, -0.05, 0], 1);
-	    createEnemy([0.5,0.5,0], 180, [1, 1, -0.75, 0, -0.05 ], 0);
-	    makeone = true;
-	    
-	}
-
-	/*
-	
-	if (totaltime1 >= 2) {
-
-	    EnemyTypeFires(0, [0,0,-0.2] , 0);
-	    //console.log("made it here");
-	    totaltime1 = 0;
-
-	}
-	*/
-	
-	
-	
-	if (shootone == false && totaltime1 >= 0.1){
-
-	    EnemyTypeFires(0, [0,0,-0.2] , 0);
-	    shootone = true;
-	    
-	}
-	
-	
-
-	//console.log(totaltime1);
+	/*===============PLAYER PROJECTILES==============*/
 	
 	var pbBuf = 0;
 
@@ -1844,6 +2331,18 @@ window.onload = function init()
 		gl.uniformMatrix4fv(modelLoc, false, flatten(pbModel));
 		gl.uniform1i(textLoc, 0);
 
+		gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
+			      flatten(ambientProduct));
+		gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
+			      flatten(diffuseProduct) );
+		gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"),
+			      flatten(specularProduct) );
+		gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"),
+			      flatten(lightPosition) );
+		
+		gl.uniform1f(gl.getUniformLocation(program,
+					   "shininess"),materialShininess);
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, vbufList[pbStart + pbBuf]);
 		gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
 		
@@ -1851,6 +2350,9 @@ window.onload = function init()
 		gl.vertexAttribPointer(vColor, 4, gl.FLOAT,false, 0, 0);
 		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibufList[pbStart + pbBuf]);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, nbufList[pbStart + pbBuf]);
+		gl.vertexAttribPointer(vNormal, 4, gl.FLOAT,false, 0, 0);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, tbufList[pbStart + pbBuf]);
 		gl.vertexAttribPointer(vTexcoord, 2, gl.FLOAT,false, 0, 0);
@@ -1865,8 +2367,10 @@ window.onload = function init()
 	    
 	}
 
+	/*===============ENEMY MODELS==============*/
+	
 	var eBuf = 0;
-
+	
 	while (eBuf < eSize) {
 
 	    if (eActivate[eBuf]) {
@@ -1902,6 +2406,17 @@ window.onload = function init()
 		gl.uniformMatrix4fv(modelLoc, false, flatten(eModel));
 		gl.uniform1i(textLoc, 0);
 
+		gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
+			      flatten(ambientProduct));
+		gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
+			      flatten(diffuseProduct) );
+		gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"),
+			      flatten(specularProduct) );
+		gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"),
+			      flatten(lightPosition) );
+		gl.uniform1f(gl.getUniformLocation(program,
+					   "shininess"),materialShininess);
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, vbufList[eStart + eBuf]);
 		gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
 		
@@ -1910,6 +2425,9 @@ window.onload = function init()
 		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibufList[eStart + eBuf]);
 
+		gl.bindBuffer(gl.ARRAY_BUFFER, nbufList[eStart + eBuf]);
+		gl.vertexAttribPointer(vNormal, 4, gl.FLOAT,false, 0, 0);
+		
 		gl.bindBuffer(gl.ARRAY_BUFFER, tbufList[eStart + eBuf]);
 		gl.vertexAttribPointer(vTexcoord, 2, gl.FLOAT,false, 0, 0);
 		
@@ -1925,6 +2443,8 @@ window.onload = function init()
 	    
 	}
 
+	/*===============ENEMY PROJECTILES==============*/
+	
 	var ebBuf = 0;
 
 	while (ebBuf < ebSize) {
@@ -1949,7 +2469,7 @@ window.onload = function init()
 		var ebModel = mult(etm, ebRotate);
 
 		
-		if (ebBuf >= 100) { //100 is length of ebSize so would need adjustments
+		if (ebBuf >= 200) { //100 is length of ebSize so would need adjustments
 		    var bigger = scalem( 3, 3, 3 );
 		    ebModel = mult(ebModel, bigger);
 		    
@@ -1961,6 +2481,17 @@ window.onload = function init()
 		gl.uniformMatrix4fv(modelLoc, false, flatten(ebModel));
 		gl.uniform1i(textLoc, 0);
 
+		gl.uniform4fv(gl.getUniformLocation(program, "ambientProduct"),
+			      flatten(ambientProduct));
+		gl.uniform4fv(gl.getUniformLocation(program, "diffuseProduct"),
+			      flatten(diffuseProduct) );
+		gl.uniform4fv(gl.getUniformLocation(program, "specularProduct"),
+			      flatten(specularProduct) );
+		gl.uniform4fv(gl.getUniformLocation(program, "lightPosition"),
+			      flatten(lightPosition) );
+		gl.uniform1f(gl.getUniformLocation(program,
+					   "shininess"),materialShininess);
+
 		gl.bindBuffer(gl.ARRAY_BUFFER, vbufList[ebStart + ebBuf]);
 		gl.vertexAttribPointer(vPosition, 3, gl.FLOAT, false, 0, 0);
 		
@@ -1968,6 +2499,9 @@ window.onload = function init()
 		gl.vertexAttribPointer(vColor, 4, gl.FLOAT,false, 0, 0);
 		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibufList[ebStart + ebBuf]);
+
+		gl.bindBuffer(gl.ARRAY_BUFFER, nbufList[ebStart + ebBuf]);
+		gl.vertexAttribPointer(vNormal, 4, gl.FLOAT,false, 0, 0);
 
 		gl.bindBuffer(gl.ARRAY_BUFFER, tbufList[ebStart + ebBuf]);
 		gl.vertexAttribPointer(vTexcoord, 2, gl.FLOAT,false, 0, 0);
@@ -1984,13 +2518,35 @@ window.onload = function init()
 	    
 	}
 
+	/*======================GAME ENGINE FUNCTIONS===============*/
+		
+	setpTranslate(timedif);
+		
+	if (makeone == false) {
 
+	    createEnemy([0,0.5,0], 0, [0, 0.05, 0], 1);
+	    //createEnemy([0.5,0.5,0], 180, [1, 1, -0.75, 0, -0.05 ], 0);
+	    makeone = true;
+	    
+	}
+	
+	phase0();
+	
+	//console.log(totaltime1);
+	bossbounce();
+
+	pBulletVSEnemy();
+	eBulletVSPlayer();
+	EnemyVSPlayer();
 
 	delPBullets();
+	invFrames()
 	delEnemy();
 	delEBullets();
 
 	thistime = new Date().getTime();
+	eBossChangedX += 1;
+	eBossChangedY += 1;
 	
 	requestAnimFrame( render );
     }
